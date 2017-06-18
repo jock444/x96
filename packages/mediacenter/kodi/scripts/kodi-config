@@ -1,0 +1,54 @@
+#!/bin/sh
+################################################################################
+#      This file is part of FlycomELEC - http://www.flycom.net.ua
+#      Copyright (C) 2009-2017 Stephan Raue (office@flycom.net.ua)
+################################################################################
+
+
+# hack: make addon-bins executable
+# done in kodi on addon install. but just in case..
+chmod +x /storage/.kodi/addons/*/bin/*
+
+# hack: update RSSnews.xml in userdata
+if [ -f /storage/.kodi/userdata/RssFeeds.xml ]; then
+  sed -e "s,http://libreelec.tv/news?format=feed&type=rss,http://feeds.libreelec.tv/news,g" \
+      -i /storage/.kodi/userdata/RssFeeds.xml
+fi
+
+# setup Kodi sources
+if [ ! -f $HOME/.kodi/userdata/sources.xml ]; then
+  if [ -f /usr/share/kodi/config/sources.xml ]; then
+    cp /usr/share/kodi/config/sources.xml $HOME/.kodi/userdata
+  fi
+fi
+
+# common setup guisettings
+if [ ! -f $HOME/.kodi/userdata/guisettings.xml ] ; then
+  if [ -f /usr/share/kodi/config/guisettings.xml ]; then
+    cp /usr/share/kodi/config/guisettings.xml $HOME/.kodi/userdata
+  fi
+fi
+
+if [ ! -d $HOME/.kodi/userdata/addon_data/pvr.hts ]; then
+  if [ -d /usr/share/kodi/config/pvr.hts ]; then
+    mkdir -p $HOME/.kodi/userdata/addon_data
+    cp -R /usr/share/kodi/config/pvr.hts $HOME/.kodi/userdata/addon_data
+  fi
+fi
+
++# set AV-output (cvbs)
+if [ ! -f $HOME/.kodi/userdata/cvbs_present ] ; then
+  touch $HOME/.kodi/userdata/cvbs_present
+  if [ -f /usr/share/kodi/config/cvbs_fallback ]; then
+    cp -f /usr/share/kodi/config/cvbs_fallback $HOME/.kodi/userdata
+    cp -f /usr/share/kodi/config/cvbs_fallback $HOME/.kodi/userdata/cvbs_override.sample
+  fi
+fi
+
+KODI_ARGS="--lircdev /run/lirc/lircd"
+
+echo "KODI_ARGS=\"$KODI_ARGS\"" > /run/libreelec/kodi.conf
+
+if grep -q 'aarch64\|x86_64' /etc/os-release ; then
+  echo "MALLOC_MMAP_THRESHOLD_=524288" >> /run/libreelec/kodi.conf
+fi
